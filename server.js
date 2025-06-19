@@ -2,16 +2,26 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
 const path = require('path');
+const config = require('./_config');
 
 // Define routes
 let index = require('./routes/index');
 let image = require('./routes/image');
 
 // connecting the database
-let mongodb_url = 'mongodb://localhost:27017/';
-let dbName = 'darkroom';
-mongoose.connect(`${mongodb_url}${dbName}`,{ useNewUrlParser: true , useUnifiedTopology: true }, (err)=>{
-    if (err) console.log(err)
+// let mongodb_url = 'mongodb://localhost:27017/';
+// let dbName = 'darkroom';
+// mongoose.connect(`${mongodb_url}${dbName}`,{ useNewUrlParser: true , useUnifiedTopology: true }, (err)=>{
+//     if (err) console.log(err)
+// });
+
+const environment = process.env.NODE_ENV || 'development'; // Default to 'development'
+const mongoURI = config.mongoURI[environment]; // Select URI based on environment
+mongoose.connect(mongoURI, { useNewUrlParser: true, useUnifiedTopology: true }, (err) => {
+    if (err) {
+        console.error('MongoDB connection error:', err);
+        process.exit(1); // Exit process on connection failure
+    }
 });
 
 // test if the database has connected successfully
