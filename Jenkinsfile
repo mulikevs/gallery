@@ -7,7 +7,7 @@ environment {
 }
 
 triggers {
-    pollSCM('H/2 * * * *') // Polls SCM every 2 minutes;
+    pollSCM('H/2 * * * *') 
 }
 
 stages {
