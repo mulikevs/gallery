@@ -3,7 +3,7 @@ tools {
 }
 
 environment {
-    VERSION_NUMBER = '1.0' // my comment
+    VERSION_NUMBER = '1.0'
 }
 
 stages {
