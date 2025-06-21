@@ -6,10 +6,6 @@ environment {
     VERSION_NUMBER = '1.0' // my comment
 }
 
-triggers {
-    pollSCM('H/2 * * * *') 
-}
-
 stages {
     stage('Clone Repository') {
         steps {
