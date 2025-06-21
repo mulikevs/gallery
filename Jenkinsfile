@@ -41,7 +41,7 @@ pipeline {
                 echo '| Step                  | Performed By     |'
                 echo '+------------------------+------------------+'
                 echo "| Running project tests | ${env.BUILD_USER} |"
-                sh 'npm test || true' // Allow pipeline to continue even if tests fail
+                sh 'npm test' // Fail pipeline if tests fail
                 echo '+------------------------+------------------+'
             }
         }
@@ -75,7 +75,6 @@ pipeline {
         }
         stage('Deploy to Render') {
             steps {
-                // Echo message for Render deployment
                 echo 'Comments Table for Deploy to Render Stage:'
                 echo '+----------------------------------+------------------+'
                 echo '| Step                            | Performed By     |'
@@ -91,7 +90,6 @@ pipeline {
             echo "Pipeline for ${env.APP_NAME} v${env.VERSION_NUMBER}, Build #${env.BUILD_NUMBER} completed"
         }
         success {
-            // Echo message for Slack success notification
             echo 'Comments Table for Slack Success Notification:'
             echo '+----------------------------------+------------------+'
             echo '| Step                            | Performed By     |'
@@ -102,13 +100,28 @@ pipeline {
             echo "Build #${env.BUILD_NUMBER} for ${env.APP_NAME} v${env.VERSION_NUMBER} succeeded"
         }
         failure {
-            // Echo message for Slack failure notification
             echo 'Comments Table for Slack Failure Notification:'
             echo '+----------------------------------+------------------+'
             echo '| Step                            | Performed By     |'
             echo '+----------------------------------+------------------+'
             echo "| Sending Slack failure message   | ${env.BUILD_USER} |"
             echo "Sending failure notification to Slack for ${env.APP_NAME} v${env.VERSION_NUMBER}, Build #${env.BUILD_NUMBER}"
+            echo '+----------------------------------+------------------+'
+            echo 'Comments Table for Email Failure Notification:'
+            echo '+----------------------------------+------------------+'
+            echo '| Step                            | Performed By     |'
+            echo '+----------------------------------+------------------+'
+            echo "| Sending email notification      | ${env.BUILD_USER} |"
+            emailext (
+                subject: "Build #${env.BUILD_NUMBER} Failed for ${env.APP_NAME} v${env.VERSION_NUMBER}",
+                body: """
+                    Pipeline for ${env.APP_NAME} v${env.VERSION_NUMBER} failed on Build #${env.BUILD_NUMBER}.
+                    Check Jenkins console output for details: ${env.BUILD_URL}
+                    Test failures detected. Please review the test results.
+                """,
+                to: 'your-email@example.com', // Replace with actual email
+                attachLog: true
+            )
             echo '+----------------------------------+------------------+'
             echo "Build #${env.BUILD_NUMBER} for ${env.APP_NAME} v${env.VERSION_NUMBER} failed"
         }
