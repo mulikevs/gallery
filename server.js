@@ -11,7 +11,11 @@ let image = require('./routes/image');
 // Connect to MongoDB
 const environment = process.env.NODE_ENV || 'development';
 const mongoURI = config.mongoURI[environment];
-mongoose.connect(mongoURI, { useNewUrlParser: true, useUnifiedTopology: true }, (err) => {
+// Use mongodb+srv:// for Atlas, assuming credentials are correct
+mongoose.connect(mongoURI.replace('mongodb://', 'mongodb+srv://'), {
+    useNewUrlParser: true,
+    useUnifiedTopology: true
+}, (err) => {
     if (err) {
         console.error('MongoDB connection error:', err);
         process.exit(1);
@@ -40,7 +44,7 @@ app.use('/', index);
 app.use('/image', image);
 
 // Start server only if not in test environment
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5010;
 if (process.env.NODE_ENV !== 'test') {
     app.listen(PORT, () => {
         console.log(`Server is listening at http://localhost:${PORT}`);
