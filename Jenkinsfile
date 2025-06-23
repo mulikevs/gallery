@@ -30,7 +30,7 @@ pipeline {
                 echo '| Step                            | Performed By     |'
                 echo '+----------------------------------+------------------+'
                 echo "| Installing Node.js dependencies | ${env.BUILD_USER} |"
-                sh 'npm ci' // Use npm ci for reproducible builds
+                sh 'npm install'
                 echo '+----------------------------------+------------------+'
             }
         }
