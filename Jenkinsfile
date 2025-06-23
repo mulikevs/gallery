@@ -47,6 +47,13 @@ pipeline {
             steps {
                 echo 'Deploying to Render...'
                 echo "Deploying to ${env.RENDER_URL}..."
+                echo 'Comments Table for Deploy to Render Stage:'
+                echo '+----------------------------------+------------------+'
+                echo '| Step                            | Performed By     |'
+                echo '+----------------------------------+------------------+'
+                echo "| Deploying to Render hosting     | ${env.BUILD_USER} |"
+                echo "Deploying to ${env.RENDER_URL}..."
+                echo '+----------------------------------+------------------+'
             }
         }
     }
