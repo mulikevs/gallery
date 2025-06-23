@@ -40,7 +40,7 @@ app.use('/', index);
 app.use('/image', image);
 
 // Start server only if not in test environment
-const PORT = process.env.PORT || 500;
+const PORT = process.env.PORT || 5000;
 if (process.env.NODE_ENV !== 'test') {
     app.listen(PORT, () => {
         console.log(`Server is listening at http://localhost:${PORT}`);
