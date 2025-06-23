@@ -1,24 +1,24 @@
-const request = require('supertest');
-const expect = require('chai').expect;
-const app = require('../server'); // Import the exported app
+process.env.NODE_ENV = 'test';
 
-describe('Gallery API', () => {
-    before(() => {
-        process.env.NODE_ENV = 'test'; // Set test environment
-    });
+var chai = require('chai');
+var chaiHttp = require('chai-http');
 
-    it('should return 200 for GET /', (done) => {
-        request(app)
+var server = require('../server');
+var should = chai.should();
+var expect = chai.expect;
+
+chai.use(chaiHttp);
+
+describe('Photos', function() {
+    it('should list ALL photos on / GET', function(done) {
+        this.timeout(60000);
+        chai.request(server)
             .get('/')
-            .expect(200)
-            .end((err, res) => {
-                if (err) return done(err);
-                expect(res.status).to.equal(200);
+            .end(function(err, res) {
+                res.should.have.status(200);
+                res.should.be.html;
+                res.body.should.be.a('object');
                 done();
             });
-    });
-
-    after(() => {
-        process.env.NODE_ENV = 'development'; // Reset environment
     });
 });

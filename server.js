@@ -11,7 +11,11 @@ let image = require('./routes/image');
 // Connect to MongoDB
 const environment = process.env.NODE_ENV || 'development';
 const mongoURI = config.mongoURI[environment];
-mongoose.connect(mongoURI, { useNewUrlParser: true, useUnifiedTopology: true }, (err) => {
+// Use mongodb+srv:// for Atlas, assuming credentials are correct
+mongoose.connect(mongoURI.replace('mongodb://', 'mongodb+srv://'), {
+    useNewUrlParser: true,
+    useUnifiedTopology: true
+}, (err) => {
     if (err) {
         console.error('MongoDB connection error:', err);
         process.exit(1);
