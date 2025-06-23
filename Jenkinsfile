@@ -5,125 +5,87 @@ pipeline {
     }
     environment {
         VERSION_NUMBER = '1.0' // Project version
-        APP_NAME = 'gallery'   // Application name for clarity in logs
-        BUILD_USER = "${env.BUILD_USER ?: 'Jenkins Pipeline'}" // Fallback to 'Jenkins Pipeline' if BUILD_USER is unavailable
+        APP_NAME = 'gallery' // Application name
+        SLACK_CHANNEL = '#all-arnoldip1' // Slack channel for notifications
+        RENDER_URL = 'https://gallery-2ix4.onrender.com' // Render deployment URL
     }
     stages {
-        stage('Initialize') {
+        stage('Clone repository') { // Clone git repo and checkout code on master branch
             steps {
-                echo "Starting pipeline for ${env.APP_NAME} v${env.VERSION_NUMBER}, Build #${env.BUILD_NUMBER}"
-                echo 'Comments Table for Initialize Stage:'
-                echo '+---------------------------+------------------+'
-                echo '| Step                      | Performed By     |'
-                echo '+---------------------------+------------------+'
-                echo "| Verifying Node.js version | ${env.BUILD_USER} |"
-                sh 'node --version'
-                echo "| Verifying npm version     | ${env.BUILD_USER} |"
-                sh 'npm --version'
-                echo '+---------------------------+------------------+'
+                echo 'Cloning repository...'
+                // Checkout master branch
+                git branch: 'master', url: 'https://github.com/mulikevs/gallery.git'
             }
         }
-        stage('Install Dependencies') {
+        stage('Install Dependencies') { // Install dependencies
             steps {
-                echo 'Comments Table for Install Dependencies Stage:'
-                echo '+----------------------------------+------------------+'
-                echo '| Step                            | Performed By     |'
-                echo '+----------------------------------+------------------+'
-                echo "| Installing Node.js dependencies | ${env.BUILD_USER} |"
-                sh 'npm install'
-                echo '+----------------------------------+------------------+'
+                echo 'Installing dependencies...'
+                // Run npm ci for reproducible builds
+                sh 'npm ci'
             }
         }
-        stage('Run Tests') {
+        stage('Start server') { // Start server
             steps {
-                echo 'Comments Table for Run Tests Stage:'
-                echo '+------------------------+------------------+'
-                echo '| Step                  | Performed By     |'
-                echo '+------------------------+------------------+'
-                echo "| Running project tests | ${env.BUILD_USER} |"
-                sh 'npm test' // Fail pipeline if tests fail
-                echo '+------------------------+------------------+'
+                echo 'Starting server...'
+                sh 'nohup node server.js &'
+                echo 'Server started'
             }
         }
-        stage('Build') {
+        stage('Test') { // Test listens to started server
             steps {
-                echo 'Comments Table for Build Stage:'
-                echo '+------------------------+------------------+'
-                echo '| Step                  | Performed By     |'
-                echo '+------------------------+------------------+'
-                echo "| Building project      | ${env.BUILD_USER} |"
-                script {
-                    def buildStatus = sh(script: 'npm run build', returnStatus: true)
-                    if (buildStatus != 0) {
-                        echo "No build step defined or build failed, continuing pipeline"
-                        echo "| Build step skipped    | ${env.BUILD_USER} |"
-                    }
-                }
-                echo '+------------------------+------------------+'
+                echo 'Running tests...'
+                sh 'npm test'
             }
         }
-        stage('Archive Artifacts') {
+        stage('Stop server') { // Stop server after tests
             steps {
-                echo 'Comments Table for Archive Artifacts Stage:'
-                echo '+--------------------------+------------------+'
-                echo '| Step                    | Performed By     |'
-                echo '+--------------------------+------------------+'
-                echo "| Archiving artifacts     | ${env.BUILD_USER} |"
-                archiveArtifacts artifacts: 'dist/**/*', allowEmptyArchive: true
-                echo '+--------------------------+------------------+'
+                echo 'Stopping server...'
+                sh 'pkill -f "node server.js" || true'
             }
         }
-        stage('Deploy to Render') {
+        stage('Deploy to Render') { // Deploy to Render
             steps {
+                echo 'Deploying to Render...'
+                echo "Deploying to ${env.RENDER_URL}..."
                 echo 'Comments Table for Deploy to Render Stage:'
                 echo '+----------------------------------+------------------+'
                 echo '| Step                            | Performed By     |'
                 echo '+----------------------------------+------------------+'
                 echo "| Deploying to Render hosting     | ${env.BUILD_USER} |"
-                echo 'Deploying to Render hosting platform...'
+                echo "Deploying to ${env.RENDER_URL}..."
                 echo '+----------------------------------+------------------+'
             }
         }
     }
     post {
         always {
-            echo "Pipeline for ${env.APP_NAME} v${env.VERSION_NUMBER}, Build #${env.BUILD_NUMBER} completed"
+            echo 'Pipeline completed'
         }
         success {
-            echo 'Comments Table for Slack Success Notification:'
-            echo '+----------------------------------+------------------+'
-            echo '| Step                            | Performed By     |'
-            echo '+----------------------------------+------------------+'
-            echo "| Sending Slack success message   | ${env.BUILD_USER} |"
-            echo "Sending success notification to Slack for ${env.APP_NAME} v${env.VERSION_NUMBER}, Build #${env.BUILD_NUMBER}"
-            echo '+----------------------------------+------------------+'
-            echo "Build #${env.BUILD_NUMBER} for ${env.APP_NAME} v${env.VERSION_NUMBER} succeeded"
+            echo 'Sending Slack success notification...'
+            slackSend(
+                channel: env.SLACK_CHANNEL,
+                color: 'good',
+                message: "Build ${env.BUILD_NUMBER} of ${env.APP_NAME} v${env.VERSION_NUMBER} successfully deployed to ${env.RENDER_URL}"
+            )
+            echo 'Build succeeded'
         }
         failure {
-            echo 'Comments Table for Slack Failure Notification:'
-            echo '+----------------------------------+------------------+'
-            echo '| Step                            | Performed By     |'
-            echo '+----------------------------------+------------------+'
-            echo "| Sending Slack failure message   | ${env.BUILD_USER} |"
-            echo "Sending failure notification to Slack for ${env.APP_NAME} v${env.VERSION_NUMBER}, Build #${env.BUILD_NUMBER}"
-            echo '+----------------------------------+------------------+'
-            echo 'Comments Table for Email Failure Notification:'
-            echo '+----------------------------------+------------------+'
-            echo '| Step                            | Performed By     |'
-            echo '+----------------------------------+------------------+'
-            echo "| Sending email notification      | ${env.BUILD_USER} |"
-            emailext (
-                subject: "Build #${env.BUILD_NUMBER} Failed for ${env.APP_NAME} v${env.VERSION_NUMBER}",
+            echo 'Sending email notification for failure...'
+            emailext(
+                attachLog: true,
+                subject: "Build #${env.BUILD_NUMBER} Failed: ${env.APP_NAME} v${env.VERSION_NUMBER}",
                 body: """
-                    Pipeline for ${env.APP_NAME} v${env.VERSION_NUMBER} failed on Build #${env.BUILD_NUMBER}.
-                    Check Jenkins console output for details: ${env.BUILD_URL}
-                    Test failures detected. Please review the test results.
+                    <p><b>Job Failure: ${env.JOB_NAME} #${env.BUILD_NUMBER}</b></p>
+                    <p>Project: ${env.APP_NAME} v${env.VERSION_NUMBER}</p>
+                    <p>Test execution failed. Check the test results in the attached log.</p>
+                    <p>View console output: <a href="${env.BUILD_URL}">${env.BUILD_URL}</a></p>
+                    <p>Deployed site (if applicable): <a href="${env.RENDER_URL}">${env.RENDER_URL}</a></p>
+                    <p><i>Build log is attached.</i></p>
                 """,
-                to: 'your-email@example.com', // Replace with actual email
-                attachLog: true
+                to: 'mulikevs@gmail.com'
             )
-            echo '+----------------------------------+------------------+'
-            echo "Build #${env.BUILD_NUMBER} for ${env.APP_NAME} v${env.VERSION_NUMBER} failed"
+            echo 'Build failed'
         }
     }
 }
