@@ -7,7 +7,7 @@ pipeline {
         VERSION_NUMBER = '1.0' // Project version
         APP_NAME = 'gallery' // Application name
         SLACK_CHANNEL = '#all-arnoldip1' // Slack channel for notifications
-        RENDER_URL = 'https://gallery-2ix4.onrender.com' // Render deployment URL
+        RENDER_URL = 'https://gallery-1-52ks.onrender.com/' // Render deployment URL
     }
     stages {
         stage('Clone repository') { // Clone git repo and checkout code on master branch
