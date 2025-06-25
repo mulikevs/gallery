@@ -6,7 +6,7 @@ pipeline {
     environment {
         VERSION_NUMBER = '1.0' // Project version
         APP_NAME = 'gallery' // Application name
-        SLACK_CHANNEL = '#all-arnoldip1' // Slack channel for notifications
+        SLACK_CHANNEL = '#mulikevs' // Slack channel for notifications
         RENDER_URL = 'https://gallery-1-52ks.onrender.com/' // Render deployment URL
     }
     stages {
